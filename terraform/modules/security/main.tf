@@ -75,6 +75,92 @@ resource "aws_iam_role" "kube_profile_role" {
     Version = "2012-10-17"
     Statement = [
       {
+        Action    = "sts:AssumeRole"
+        Effect    = "Allow"
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+# IAM Policy adaptée pour CloudNativePG (Barman Cloud)
+resource "aws_iam_policy" "cnpg_barman_s3" {
+  name        = "${var.name}-cnpg-barman-s3-policy"
+  description = "Autorise CloudNativePG (Barman) a ecrire les backups et WALs dans S3"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:ListBucket",
+          "s3:GetBucketLocation"
+        ]
+        Resource = [var.bucket_s3_arn]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:DeleteObject",
+          "s3:ListBucketMultipartUploads",
+          "s3:AbortMultipartUpload"
+        ]
+        Resource = ["${var.bucket_s3_arn}/*"]
+      }
+    ]
+  })
+}
+
+# IAM attach role policy (Mis à jour avec le nouveau nom de la ressource)
+resource "aws_iam_role_policy_attachment" "attach_cnpg_barman" {
+  role       = aws_iam_role.kube_profile_role.name
+  policy_arn = aws_iam_policy.cnpg_barman_s3.arn
+}
+
+# 5. Instance Profile
+resource "aws_iam_instance_profile" "kube_profile" {
+  name = "${var.name}-kube-instance-profile"
+  role = aws_iam_role.kube_profile_role.name
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+# -------------------------------------------------------------
+# 1. IAM ROLE
+# -------------------------------------------------------------
+resource "aws_iam_role" "kube_profile_role" {
+  name = "${var.name}-kube-profile-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
         Action = "sts:AssumeRole"
         Effect = "Allow"
         Principal = {
@@ -127,3 +213,5 @@ resource "aws_iam_instance_profile" "kube_profile" {
   name = "${var.name}-kube-instance-profile"
   role = aws_iam_role.kube_profile_role.name
 }
+
+*/

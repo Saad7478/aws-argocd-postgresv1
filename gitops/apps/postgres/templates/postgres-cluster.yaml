@@ -2,32 +2,44 @@ apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
   name: pg-cluster
-  # namespace sera injecté automatiquement par ArgoCD (ici: postgres)
+  namespace: postgres
 spec:
-  instances: 3 # SRE: Haute disponibilité native (1 Master, 2 Replicas)
+  instances: 3
 
-  #imageName: public.ecr.aws/docker/library/postgres:16.4 # Utilisation de votre registry ECR public
+  #imageName: public.ecr.aws/docker/library/postgres:16.4
 
+  # 1. Configuration du stockage AWS gp3
   storage:
     size: 10Gi
-    storageClass: "local-path" # Utilisation du provisioner par défaut de K3s
+    storageClass: "gp3" # Assurez-vous que la StorageClass gp3 est bien déployée via Terraform/K3s
 
-  # Configuration des accès (Plus propre que les mots de passe en clair)
   bootstrap:
     initdb:
       database: devdb
       owner: postgres
-      # L'opérateur va créer un secret kubernetes contenant un mot de passe généré aléatoirement
-      # Vous n'avez plus de mot de passe en clair dans votre Git.
 
-  # C'est ici que l'expertise DBA brille
   postgresql:
     parameters:
       shared_buffers: "1GB"
       work_mem: "32MB"
       max_connections: "200"
-      log_min_duration_statement: "1000"
 
-  # Pour l'étape suivante (Observabilité)
+  # 2. Configuration du Backup via IAM Instance Profile
+  backup:
+    barmanObjectStore:
+      destinationPath: "s3://mon-postgres-backup-s3/" # Remplacez par votre vrai nom de bucket
+      region: "us-east-2" # Remplacez par votre région AWS (ex: eu-west-3)
+      
+      # SRE : Plus de s3Credentials ! On dit à l'opérateur d'utiliser le rôle de l'EC2
+      serverSideEncryption: "AES256"
+
+      # Configuration des WAL (Write-Ahead Logs)
+      wal:
+        compression: gzip
+        encryption: AES256
+
+      # Stratégie de rétention
+      retentionPolicy: "30d"
+
   monitoring:
     enablePodMonitor: true

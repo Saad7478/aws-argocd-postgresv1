@@ -1,0 +1,25 @@
+# -------------------------------------------------------------
+# X. Installation du pilote AWS EBS CSI Driver
+# -------------------------------------------------------------
+- name: Add AWS EBS CSI Driver Helm repository
+  kubernetes.core.helm_repository:
+    name: aws-ebs-csi-driver
+    repo_url: https://kubernetes-sigs.github.io/aws-ebs-csi-driver
+    binary_path: /usr/local/bin/helm
+  become: true
+
+- name: Install AWS EBS CSI Driver via Helm
+  kubernetes.core.helm:
+    name: aws-ebs-csi-driver
+    chart_ref: aws-ebs-csi-driver/aws-ebs-csi-driver
+    release_namespace: kube-system
+    create_namespace: false
+    binary_path: /usr/local/bin/helm
+    # Optionnel mais recommandé : forcer le driver à utiliser le profil IAM de l'EC2
+    values:
+      controller:
+        nodeSelector:
+          kubernetes.io/os: linux
+  become: true
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
