@@ -1,0 +1,47 @@
+# -------------------------------------------------------------
+# Installation du plugin CLI CloudNativePG (cnpg)
+# -------------------------------------------------------------
+
+- name: Create temporary directory
+  ansible.builtin.file:
+    path: /tmp/cnpg
+    state: directory
+    mode: '0755'
+
+- name: Download install script
+  ansible.builtin.get_url:
+    url: https://raw.githubusercontent.com/cloudnative-pg/cloudnative-pg/main/hack/install-cnpg-plugin.sh
+    dest: /tmp/cnpg/install-cnpg-plugin.sh
+    mode: '0755'
+
+- name: Run install script
+  ansible.builtin.shell: |
+    /tmp/cnpg/install-cnpg-plugin.sh
+  args:
+    chdir: /tmp/cnpg
+
+- name: Find kubectl-cnpg binary
+  ansible.builtin.find:
+    paths: /tmp/cnpg
+    patterns: "kubectl-cnpg"
+    recurse: true
+  register: cnpg_binary
+
+- name: Install kubectl-cnpg into /usr/local/bin
+  ansible.builtin.copy:
+    src: "{{ cnpg_binary.files[0].path }}"
+    dest: /usr/local/bin/kubectl-cnpg
+    mode: '0755'
+    remote_src: true
+  become: true
+
+- name: Verify cnpg plugin installation
+  ansible.builtin.shell: |
+    export PATH=$PATH:/usr/local/bin
+    kubectl plugin list
+    kubectl cnpg version
+  register: cnpg_verify
+  changed_when: false
+
+- debug:
+    var: cnpg_verify.stdout_lines

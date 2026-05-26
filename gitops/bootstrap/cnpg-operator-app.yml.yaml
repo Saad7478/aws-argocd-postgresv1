@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cnpg-operator
+  namespace: argocd # L'application elle-même est déclarée dans le namespace d'ArgoCD
+spec:
+  project: default
+
+  # SOURCE : Où ArgoCD doit récupérer le package
+  source:
+    repoURL: https://cloudnative-pg.github.io/charts # Le dépôt Helm officiel de CNPG
+    chart: cloudnative-pg                           # Le nom du chart
+    targetRevision: 0.23.0                          # La version du chart de l'opérateur
+
+  # DESTINATION : Où installer l'opérateur dans votre K3s
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cnpg-system # Un namespace dédié pour isoler l'opérateur de vos bases de données
+
+  # POLITIQUE DE SYNCHRONISATION : Automatisation SRE
+  syncPolicy:
+    automated:
+      prune: true      # Supprime les ressources si elles disparaissent du chart
+      selfHeal: true   # Rétablit la configuration si quelqu'un modifie l'opérateur manuellement
+    syncOptions:
+      - CreateNamespace=true # Demande à ArgoCD de créer le namespace 'cnpg-system' s'il n'existe pas
+      - Replace=true 
