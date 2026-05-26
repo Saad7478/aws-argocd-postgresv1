@@ -1,0 +1,13 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: pg-cluster-daily-backup
+  namespace: postgres
+spec:
+  # Expression Cron standard (Ici : tous les jours à minuit)
+  schedule: "0 0 0 * * *"
+  # Méthode de sauvegarde : immédiate ou parallélisée (barman par défaut)
+  method: barman
+  # Le nom du cluster à sauvegarder
+  cluster:
+    name: pg-cluster

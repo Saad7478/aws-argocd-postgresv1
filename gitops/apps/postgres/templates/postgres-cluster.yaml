@@ -11,7 +11,7 @@ spec:
   # 1. Configuration du stockage AWS gp3
   storage:
     size: 10Gi
-    storageClass: "gp3" # Assurez-vous que la StorageClass gp3 est bien déployée via Terraform/K3s
+    storageClass: "gp3" 
 
   bootstrap:
     initdb:
@@ -27,10 +27,13 @@ spec:
   # 2. Configuration du Backup via IAM Instance Profile
   backup:
     barmanObjectStore:
-      destinationPath: "s3://mon-postgres-backup-s3/" # Remplacez par votre vrai nom de bucket
-      region: "us-east-2" # Remplacez par votre région AWS (ex: eu-west-3)
+      destinationPath: "s3://gitops-postgres-backups/" 
+      region: "us-east-2" 
       
-      # SRE : Plus de s3Credentials ! On dit à l'opérateur d'utiliser le rôle de l'EC2
+      # FIX CRITIQUE SRE : On active explicitement l'héritage du rôle IAM de l'EC2
+      s3Credentials:
+        inheritFromIAMRole: true
+
       serverSideEncryption: "AES256"
 
       # Configuration des WAL (Write-Ahead Logs)
@@ -38,8 +41,12 @@ spec:
         compression: gzip
         encryption: AES256
 
+      # Configuration des données (Data Backups)
+      data:
+        compression: gzip
+
       # Stratégie de rétention
-      retentionPolicy: "30d"
+      retentionPolicy: "1d"
 
   monitoring:
     enablePodMonitor: true

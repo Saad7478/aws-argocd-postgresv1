@@ -62,7 +62,6 @@ argocd app diff postgres
 5. Analyse des Logs & Performance
 Le SRE doit traquer la latence et les erreurs à la seconde près.
 
-
 # Streamer les logs du Master en temps réel (Utile pour voir les requêtes lentes)
 
 kubectl logs -f pg-cluster-1 -n postgres
