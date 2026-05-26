@@ -1,2 +1,2 @@
-#- import_tasks: argocd.yml
+- import_tasks: argocd.yml
 - import_tasks: cloudnative-pg.yml

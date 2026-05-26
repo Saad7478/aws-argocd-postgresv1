@@ -9,7 +9,7 @@ spec:
   project: default
 
   source:
-    repoURL: https://github.com/Saad7478/aws-argocd-postgres.git
+    repoURL: https://github.com/Saad7478/aws-argocd-postgresv1.git
     targetRevision: main
     path: gitops/apps/postgres
     helm:
