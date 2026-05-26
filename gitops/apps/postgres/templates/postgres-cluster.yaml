@@ -27,7 +27,7 @@ spec:
   # 2. Configuration du Backup via IAM Instance Profile
   backup:
     barmanObjectStore:
-      destinationPath: "s3://gitops-postgres-backups/" 
+      destinationPath: "s3://postgres-backups/" 
       region: "us-east-2" 
       
       # FIX CRITIQUE SRE : On active explicitement l'héritage du rôle IAM de l'EC2
