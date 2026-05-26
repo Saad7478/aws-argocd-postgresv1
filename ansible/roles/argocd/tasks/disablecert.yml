@@ -1,0 +1,25 @@
+# -------------------------------------------------------------
+# Disable CNPG webhooks (TEST/LAB ONLY)
+# -------------------------------------------------------------
+
+- name: Wait CNPG operator startup
+  ansible.builtin.pause:
+    seconds: 20
+
+- name: Disable CNPG mutating webhook
+  ansible.builtin.shell: |
+    /usr/local/bin/kubectl delete mutatingwebhookconfiguration \
+    cnpg-mutating-webhook-configuration \
+    --ignore-not-found=true
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+  become: true
+
+- name: Disable CNPG validating webhook
+  ansible.builtin.shell: |
+    /usr/local/bin/kubectl delete validatingwebhookconfiguration \
+    cnpg-validating-webhook-configuration \
+    --ignore-not-found=true
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+  become: true

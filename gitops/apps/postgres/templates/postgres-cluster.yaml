@@ -23,3 +23,30 @@ spec:
       shared_buffers: "1GB"
       work_mem: "32MB"
       max_connections: "200"
+
+# 2. Configuration du Backup via IAM Instance Profile
+  backup:
+    barmanObjectStore:
+      destinationPath: "s3://postgres-backups/" 
+      region: "us-east-2" 
+      
+      # FIX CRITIQUE SRE : On active explicitement l'héritage du rôle IAM de l'EC2
+      s3Credentials:
+        inheritFromIAMRole: true
+
+      serverSideEncryption: "AES256"
+
+      # Configuration des WAL (Write-Ahead Logs)
+      wal:
+        compression: gzip
+        encryption: AES256
+
+      # Configuration des données (Data Backups)
+      data:
+        compression: gzip
+
+      # Stratégie de rétention
+      retentionPolicy: "1d"
+
+  monitoring:
+    enablePodMonitor: true
