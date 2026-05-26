@@ -1,0 +1,37 @@
+- name: Install useful packages
+  dnf:
+    name:
+      - vim
+      - wget
+      - unzip
+      - chrony
+      - net-tools
+      - python3
+      - pip
+      - socat
+    state: present
+  vars:
+    ansible_python_interpreter: /usr/libexec/platform-python
+
+- name: Install boto3 with pip
+  pip:
+    name:
+      - boto3
+      - botocore
+    executable: pip3
+
+- name: Start chronyd
+  service:
+    name: chronyd
+    state: started
+    enabled: true
+
+- name: Disable SELinux
+  selinux:
+    state: disabled
+  register: selinux_status
+
+- name: Reboot if SELinux was changed
+  reboot:
+  when: selinux_status.changed
+

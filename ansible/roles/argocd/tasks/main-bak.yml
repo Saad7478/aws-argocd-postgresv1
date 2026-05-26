@@ -1,0 +1,32 @@
+- name: Create argocd namespace
+  shell: |
+    /usr/local/bin/kubectl create namespace argocd \
+    --dry-run=client -o yaml | /usr/local/bin/kubectl apply -f -
+
+- name: Install ArgoCD
+  shell: |
+    /usr/local/bin/kubectl apply -n argocd \
+    --server-side \
+    --force-conflicts \
+    -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
+- name: Wait for ArgoCD server
+  shell: |
+    /usr/local/bin/kubectl rollout status deployment argocd-server -n argocd --timeout=300s
+
+- name: Scale down ArgoCD unused components
+  shell: "{{ item }}"
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+  loop:
+    - /usr/local/bin/kubectl scale deployment argocd-dex-server -n argocd --replicas=0
+    - /usr/local/bin/kubectl scale deployment argocd-notifications-controller -n argocd --replicas=0
+    - /usr/local/bin/kubectl scale deployment argocd-applicationset-controller -n argocd --replicas=0
+
+- name: Check available memory
+  shell: free -h
+  register: memory_output
+
+- name: Show memory
+  debug:
+    var: memory_output.stdout

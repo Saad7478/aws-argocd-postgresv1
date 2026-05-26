@@ -1,0 +1,11 @@
+apiVersion: v2
+name: postgres-gitops
+description: Application PostgreSQL avec pgBackRest et stockage S3 via ArgoCD
+type: application
+version: 1.0.0
+appVersion: "16.4.0" # Version majeure de l'application que vous visez
+
+dependencies:
+  - name: postgresql
+    version: 16.4.1 # Version récente du Chart Bitnami (qui gère très bien le changement de registry)
+    repository: https://charts.bitnami.com/bitnami
