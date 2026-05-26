@@ -7,7 +7,7 @@ spec:
   # Expression Cron standard (Ici : tous les jours à minuit)
   schedule: "0 0 0 * * *"
   # Méthode de sauvegarde : immédiate ou parallélisée (barman par défaut)
-  method: barman
+  method: barmanObjectStore
   # Le nom du cluster à sauvegarder
   cluster:
     name: pg-cluster
