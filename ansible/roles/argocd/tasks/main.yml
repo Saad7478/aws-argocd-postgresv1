@@ -89,13 +89,13 @@
 
 - name: Download cnpg plugin binary
   ansible.builtin.get_url:
-    url: "https://github.com/cloudnative-pg/cloudnative-pg/releases/download/v{{ cnpg_version }}/cnpg_{{ cnpg_version }}_linux_amd64.tar.gz"
-    dest: "/tmp/cnpg_{{ cnpg_version }}_linux_amd64.tar.gz"
+    url: "https://github.com/cloudnative-pg/cloudnative-pg/releases/download/v{{ cnpg_version }}/kubectl-cnpg_{{ cnpg_version }}_linux_amd64.tar.gz"
+    dest: "/tmp/kubectl-cnpg_{{ cnpg_version }}_linux_amd64.tar.gz"
     mode: '0644'
 
 - name: Extract cnpg binary to /usr/local/bin
   ansible.builtin.unarchive:
-    src: "/tmp/cnpg_{{ cnpg_version }}_linux_amd64.tar.gz"
+    src: "/tmp/kubectl-cnpg_{{ cnpg_version }}_linux_amd64.tar.gz"
     dest: "/usr/local/bin/"
     remote_src: true
     creates: "/usr/local/bin/kubectl-cnpg"
@@ -114,5 +114,6 @@
 
 - name: Clean up tar.gz download
   ansible.builtin.file:
-    path: "/tmp/cnpg_{{ cnpg_version }}_linux_amd64.tar.gz"
+    path: "/tmp/kubectl-cnpg_{{ cnpg_version }}_linux_amd64.tar.gz"
     state: absent
+  become: true
