@@ -1,5 +1,5 @@
 # -------------------
-# Kubernetes Instance v
+# Kubernetes Instance
 # -------------------
 
 resource "aws_instance" "kube" {
