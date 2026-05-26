@@ -6,7 +6,7 @@ metadata:
 spec:
   instances: 3 # SRE: Haute disponibilité native (1 Master, 2 Replicas)
 
-  imageName: public.ecr.aws/docker/library/postgres:16.4 # Utilisation de votre registry ECR public
+  #imageName: public.ecr.aws/docker/library/postgres:16.4 # Utilisation de votre registry ECR public
 
   storage:
     size: 10Gi
