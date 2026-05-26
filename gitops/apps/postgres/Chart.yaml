@@ -4,7 +4,7 @@ description: Opérateur PostgreSQL CloudNativePG via GitOps
 type: application
 version: 1.0.0
 
-dependencies:
-  - name: cloudnative-pg
-    version: 0.23.0 # Version du chart de l'opérateur
-    repository: https://cloudnative-pg.github.io/charts
+#dependencies:
+#  - name: cloudnative-pg
+#    version: 0.23.0 # Version du chart de l'opérateur
+#    repository: https://cloudnative-pg.github.io/charts
