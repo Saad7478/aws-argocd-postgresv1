@@ -1,11 +1,10 @@
 apiVersion: v2
 name: postgres-gitops
-description: Application PostgreSQL avec pgBackRest et stockage S3 via ArgoCD
+description: Opérateur PostgreSQL CloudNativePG via GitOps
 type: application
 version: 1.0.0
-appVersion: "16.4.0" # Version majeure de l'application que vous visez
 
 dependencies:
-  - name: postgresql
-    version: 16.4.1 # Version récente du Chart Bitnami (qui gère très bien le changement de registry)
-    repository: https://charts.bitnami.com/bitnami
+  - name: cloudnative-pg
+    version: 0.23.0 # Version du chart de l'opérateur
+    repository: https://cloudnative-pg.github.io/charts

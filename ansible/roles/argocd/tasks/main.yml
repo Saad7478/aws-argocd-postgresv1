@@ -73,3 +73,46 @@
 - name: Show remaining memory
   ansible.builtin.debug:
     var: memory_output.stdout
+
+# -------------------------------------------------------------
+# 5. Installation du plugin CLI CloudNativePG (cnpg)
+# -------------------------------------------------------------
+- name: Get latest CloudNativePG CLI release metadata
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/cloudnative-pg/cloudnative-pg/releases/latest
+    return_content: true
+  register: cnpg_latest_release
+
+- name: Set cnpg version fact
+  ansible.builtin.set_fact:
+    cnpg_version: "{{ (cnpg_latest_release.content | from_json).tag_name | replace('v', '') }}"
+
+- name: Download cnpg plugin binary
+  ansible.builtin.get_url:
+    url: "https://github.com/cloudnative-pg/cloudnative-pg/releases/download/v{{ cnpg_version }}/cnpg_{{ cnpg_version }}_linux_amd64.tar.gz"
+    dest: "/tmp/cnpg_{{ cnpg_version }}_linux_amd64.tar.gz"
+    mode: '0644'
+
+- name: Extract cnpg binary to /usr/local/bin
+  ansible.builtin.unarchive:
+    src: "/tmp/cnpg_{{ cnpg_version }}_linux_amd64.tar.gz"
+    dest: "/usr/local/bin/"
+    remote_src: true
+    creates: "/usr/local/bin/kubectl-cnpg"
+    exclude:
+      - LICENSE
+      - README.md
+  become: true
+
+- name: Ensure correct permissions for kubectl integration
+  ansible.builtin.file:
+    path: /usr/local/bin/kubectl-cnpg
+    mode: '0755'
+    owner: root
+    group: root
+  become: true
+
+- name: Clean up tar.gz download
+  ansible.builtin.file:
+    path: "/tmp/cnpg_{{ cnpg_version }}_linux_amd64.tar.gz"
+    state: absent

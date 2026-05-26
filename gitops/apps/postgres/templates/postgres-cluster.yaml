@@ -1,0 +1,33 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: pg-cluster
+  # namespace sera injecté automatiquement par ArgoCD (ici: postgres)
+spec:
+  instances: 3 # SRE: Haute disponibilité native (1 Master, 2 Replicas)
+
+  imageName: public.ecr.aws/docker/library/postgres:16.4 # Utilisation de votre registry ECR public
+
+  storage:
+    size: 10Gi
+    storageClass: "local-path" # Utilisation du provisioner par défaut de K3s
+
+  # Configuration des accès (Plus propre que les mots de passe en clair)
+  bootstrap:
+    initdb:
+      database: devdb
+      owner: postgres
+      # L'opérateur va créer un secret kubernetes contenant un mot de passe généré aléatoirement
+      # Vous n'avez plus de mot de passe en clair dans votre Git.
+
+  # C'est ici que l'expertise DBA brille
+  postgresql:
+    parameters:
+      shared_buffers: "1GB"
+      work_mem: "32MB"
+      max_connections: "200"
+      log_min_duration_statement: "1000"
+
+  # Pour l'étape suivante (Observabilité)
+  monitoring:
+    enablePodMonitor: true
