@@ -1,0 +1,54 @@
+name: GitOps Complete Validation
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  lint-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      # 1. CHECK YAML SYNTAX
+      - name: Run Yamllint
+        uses: ibiqlik/action-yamllint@v3
+        with:
+          file_or_dir: .
+          config_data: |
+            extends: relaxed
+            rules:
+              line-length: disable
+              trailing-spaces: disable
+              new-line-at-end-of-file: disable
+              empty-lines: disable
+
+      # 2. Bootstrap Manifest and Certificate Validation
+      - name: Validate Bootstrap & Certs Manifests (Kubeconform)
+        run: |
+          docker run --rm -v $(pwd):/zone -w /zone ghcr.io/yannh/kubeconform:latest \
+            -strict \
+            -summary \
+            -schema-location default \
+            -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+            gitops/bootstrap/ gitops/apps/postgres-certs/
+
+      # 3. PostgreSQL Helm Chart Validation
+      - name: Template and Validate Helm Chart (Postgres)
+        run: |
+          # On génère le rendu des fichiers YAML du Chart Helm
+          helm template postgres ./gitops/apps/postgres > postgres-rendered.yaml
+          
+          # On valide le fichier généré avec l'image Docker officielle
+          docker run --rm -v $(pwd):/zone -w /zone ghcr.io/yannh/kubeconform:latest \
+            -strict \
+            -summary \
+            -schema-location default \
+            -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+            postgres-rendered.yaml

@@ -1,0 +1,22 @@
+pg_bloat:
+  query: |
+    SELECT
+      current_database() AS datname,
+      schemaname,
+      relname,
+      (
+        pgstattuple_approx(
+          format('%I.%I', schemaname, relname)
+        )
+      ).dead_tuple_percent AS bloat_percent
+    FROM pg_stat_user_tables
+    WHERE pg_total_relation_size(relid) > 1073741824
+  metrics:
+    - datname:
+        usage: "LABEL"
+    - schemaname:
+        usage: "LABEL"
+    - relname:
+        usage: "LABEL"
+    - bloat_percent:
+        usage: "GAUGE"

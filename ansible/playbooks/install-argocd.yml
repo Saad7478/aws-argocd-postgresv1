@@ -1,0 +1,8 @@
+- hosts: kube
+  become: true
+  vars_files:
+    - "group_vars/all.yaml"
+    - "group_vars/vault.yaml"
+
+  roles:
+    - argocd

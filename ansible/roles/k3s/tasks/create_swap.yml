@@ -1,0 +1,32 @@
+- name: Create swap file
+  command: fallocate -l 8G /swapfile
+  args:
+    creates: /swapfile
+  register: swap_file_created
+
+- name: Set swap permissions
+  file:
+    path: /swapfile
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: Format swap
+  command: mkswap /swapfile
+  when: swap_file_created.changed
+  
+- name: Check if swap is currently enabled
+  shell: swapon --show | grep -q "^/swapfile"
+  register: swap_enabled
+  failed_when: false
+  changed_when: false
+
+- name: Enable swap
+  command: swapon /swapfile
+  when: swap_enabled.rc != 0
+  
+- name: Persist swap in fstab
+  lineinfile:
+    path: /etc/fstab
+    line: '/swapfile none swap defaults 0 0'
+    state: present

@@ -1,0 +1,32 @@
+{{- if .Values.restore.enabled }}
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: {{ .Values.restore.clusterName }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  instances: 1
+
+  imageName: {{ .Values.cluster.imageName | quote }}
+
+  storage:
+    size: {{ .Values.storage.size | quote }}
+    storageClass: {{ .Values.storage.storageClass | quote }}
+
+  certificates:
+    serverTLSSecret: {{ .Values.certificates.serverTLSSecret | quote }}
+    serverCASecret: {{ .Values.certificates.serverCASecret | quote }}
+    clientCASecret: {{ .Values.certificates.clientCASecret | quote }}
+    replicationTLSSecret: {{ .Values.certificates.replicationTLSSecret | quote }}
+
+  bootstrap:
+    recovery:
+      source: {{ .Values.cluster.name | quote }}
+
+  externalClusters:
+    - name: {{ .Values.cluster.name | quote }}
+      barmanObjectStore:
+        destinationPath: {{ .Values.backup.s3Bucket | quote }}
+        s3Credentials:
+          inheritFromIAMRole: true
+{{- end }}

@@ -1,0 +1,10 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: {{ .Values.storageClass.name }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "{{ .Values.storageClass.syncWave }}"
+provisioner: {{ .Values.storageClass.provisioner }}
+volumeBindingMode: {{ .Values.storageClass.volumeBindingMode }}
+parameters:
+  type: {{ .Values.storageClass.type }}

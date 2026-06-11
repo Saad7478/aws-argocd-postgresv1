@@ -1,0 +1,118 @@
+# PostgreSQL Section
+cluster:
+  name: pg-cluster
+  instances: 3
+  minSyncReplicas: 1
+  maxSyncReplicas: 2
+  syncWave: "2"
+  imageName: ghcr.io/cloudnative-pg/postgresql:15.14
+
+database:
+  name: devdb
+  owner: devuser
+  
+storage:
+  size: 10Gi
+  #storageClass: gp3
+
+storageClass:
+  name: gp3
+  provisioner: ebs.csi.aws.com
+  volumeBindingMode: WaitForFirstConsumer
+  type: gp3
+  syncWave: "1"
+
+backup:
+  retentionPolicy: "1d"
+  s3Bucket: "s3://gitops-postgres-backups/"
+  walCompression: gzip
+  dataCompression: gzip
+  scheduled:
+    enabled: true
+    name: pg-backup
+    schedule: "0 2 * * *"
+
+restore:
+  enabled: true
+  clusterName: pg-cluster-restore
+
+postgresql:
+  parameters:
+    shared_buffers: "1GB"
+    work_mem: "32MB"
+    max_connections: "200"
+    log_min_duration_statement: "0"
+    log_line_prefix: '%m [%p] %q%u@%d '
+    log_checkpoints: "on"
+    log_connections: "on"
+    log_disconnections: "on"
+    log_lock_waits: "on"
+    log_temp_files: "0"
+    log_autovacuum_min_duration: "0"
+    pgaudit.log: "ddl, write"
+    pgaudit.log_catalog: "off"
+
+monitoring:
+  prometheusRule:
+    enabled: true
+    name: pg-cluster-deadlocks
+    release: kube-prometheus-stack
+    deadlocks:
+      interval: 30s
+      alertName: PostgreSQLDeadlockDetected
+      severity: warning
+      lookback: 5m
+  enablePodMonitor: true
+  customQueriesConfigMap:
+    name: cnpg-custom-metrics
+    key: custom-metrics.yaml
+    file: files/custom-metrics.yaml
+  
+  cronjob:
+    enabled: true
+    scriptConfigMap: pg-monitor-script
+    name: pg-custom-checker
+    schedule: "*/5 * * * *"
+    serviceAccountName: default
+    image:
+      repository: python
+      tag: "3.11-slim"
+    resources:
+      requests:
+        cpu: "50m"
+        memory: "64Mi"
+      limits:
+        cpu: "100m"
+        memory: "128Mi"
+
+certificates:
+  serverTLSSecret: my-postgres-server-cert
+  serverCASecret: server-ca-key-pair
+  clientCASecret: client-ca-key-pair
+  replicationTLSSecret: my-postgres-client-cert
+
+services:
+  rw:
+    enabled: true
+    name: pg-cluster-rw-nodeport
+    nodePort: 30432
+
+  ro:
+    enabled: true
+    name: pg-cluster-ro-nodeport
+    nodePort: 30433
+
+metrics:
+  service:
+    name: pg-cluster-metrics
+    type: ClusterIP
+    port: 9187
+    targetPort: 9187
+
+grafana:
+  dashboard:
+    enabled: true
+    name: grafana-dashboard-cnpg
+    namespace: monitoring
+    label: "1"
+    file: files/cloudnativepg.json

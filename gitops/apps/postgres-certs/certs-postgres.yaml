@@ -1,0 +1,58 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: my-postgres-server-cert
+  labels:
+    cnpg.io/reload: ""
+
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: my-postgres-server-cert
+  namespace: postgres
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  secretName: my-postgres-server-cert
+  usages:
+    - server auth
+  dnsNames:
+    - pg-cluster-rw
+    - pg-cluster-rw.postgres
+    - pg-cluster-rw.postgres.svc
+    - pg-cluster-r
+    - pg-cluster-r.postgres
+    - pg-cluster-r.postgres.svc
+    - pg-cluster-ro
+    - pg-cluster-ro.postgres
+    - pg-cluster-ro.postgres.svc
+  issuerRef:
+    name: server-ca-issuer
+    kind: Issuer
+    group: cert-manager.io
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: my-postgres-client-cert
+  labels:
+    cnpg.io/reload: ""
+
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: my-postgres-client-cert
+  namespace: postgres
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  secretName: my-postgres-client-cert
+  usages:
+    - client auth
+  commonName: streaming_replica
+  issuerRef:
+    name: client-ca-issuer
+    kind: Issuer
+    group: cert-manager.io

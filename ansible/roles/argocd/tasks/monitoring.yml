@@ -1,0 +1,63 @@
+# -------------------------------------------------------------
+# Monitoring Stack Deployment 
+# -------------------------------------------------------------
+#- name: Apply ArgoCD Monitoring Application Manifest from Remote Git
+#  shell: |
+#    /usr/local/bin/kubectl apply -f https://raw.githubusercontent.com/Saad7478/aws-argocd-postgresv1/main/gitops/bootstrap/monitoring-app.yml
+#  register: monitoring_app_apply
+
+- name: Apply ArgoCD Monitoring Application Manifest from Remote Git
+  command:
+    cmd: /usr/local/bin/kubectl apply -f https://raw.githubusercontent.com/Saad7478/aws-argocd-postgresv1/main/gitops/bootstrap/monitoring-app.yml
+  register: monitoring_app_apply
+
+# -------------------------------------------------------------
+# 2. Wait for Grafana Serivce
+# -------------------------------------------------------------
+#- name: Wait for Grafana service to be created by ArgoCD
+#  shell: /usr/local/bin/kubectl get svc kube-prometheus-stack-grafana -n monitoring
+#  register: grafana_svc
+#  until: grafana_svc.rc == 0
+#  retries: 30         # Attend jusqu'à 2m30 max (30 * 5s)
+#  delay: 5
+#  failed_when: false  # Empêche Ansible de crash pendant qu'il attend (rc=1 au début)
+
+- name: Wait for Grafana service to be created by ArgoCD
+  command:
+    cmd: /usr/local/bin/kubectl get svc kube-prometheus-stack-grafana -n monitoring
+  register: grafana_svc
+  until: grafana_svc.rc == 0
+  retries: 30
+  delay: 5
+  failed_when: false
+  changed_when: false
+
+# -------------------------------------------------------------
+# Confiure NodePort 30080 for Grafana
+# -------------------------------------------------------------
+- name: Expose Grafana Server via NodePort on port 30080
+  shell: |
+    /usr/local/bin/kubectl patch svc kube-prometheus-stack-grafana -n monitoring \
+    -p '{"spec": {"type": "NodePort", "ports": [{"name": "http-web", "port": 80, "nodePort": 30080}]}}'
+  when: grafana_svc.rc == 0
+  changed_when: false
+
+- name: Wait for Prometheus service to be created by ArgoCD
+  command:
+    cmd: /usr/local/bin/kubectl get svc kube-prometheus-stack-prometheus -n monitoring
+  register: prometheus_svc
+  until: prometheus_svc.rc == 0
+  retries: 30
+  delay: 5
+  failed_when: false
+  changed_when: false
+
+# -------------------------------------------------------------
+#  Confiure NodePort 30090 for Prometheus
+# -------------------------------------------------------------
+- name: Expose Prometheus Server via NodePort on port 30090
+  shell: |
+    /usr/local/bin/kubectl patch svc kube-prometheus-stack-prometheus -n monitoring \
+    -p '{"spec": {"type": "NodePort", "ports": [{"name": "http-web", "port": 9090, "nodePort": 30090}]}}'
+  when: prometheus_svc.rc == 0
+  changed_when: false

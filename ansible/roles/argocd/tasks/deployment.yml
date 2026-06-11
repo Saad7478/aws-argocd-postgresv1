@@ -1,0 +1,71 @@
+# SMTP secret generation and injection
+- name: Render SMTP secrets from Vault and Apply to K3s
+  shell: |
+    cat << 'EOF' | /usr/local/bin/kubectl apply -f -
+    {{ lookup('template', 'smtp-secrets.yml.j2') }}
+    EOF
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+  no_log: true 
+
+# -------------------------------------------------------------
+# CloudNativePG plugin Installation
+# -------------------------------------------------------------
+- name: Create temporary directory
+  file:
+    path: /tmp/cnpg
+    state: directory
+    mode: '0755'
+
+- name: Download install script
+  get_url:
+    url: https://raw.githubusercontent.com/cloudnative-pg/cloudnative-pg/main/hack/install-cnpg-plugin.sh
+    dest: /tmp/cnpg/install-cnpg-plugin.sh
+    mode: '0755'
+
+- name: Run install script and move to /usr/local/bin
+  shell: |
+    export BINDIR=/usr/local/bin
+    /tmp/cnpg/install-cnpg-plugin.sh
+  args:
+    chdir: /tmp/cnpg
+    #creates: /usr/local/bin/kubectl-cnpg
+
+- name: Clean up temporary directory
+  file:
+    path: /tmp/cnpg
+    state: absent
+
+- name: Verify cnpg plugin installation
+  shell: |
+    export PATH=$PATH:/usr/local/bin
+    kubectl cnpg version
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+  register: cnpg_verify
+  changed_when: false
+  become: true
+
+#- name: Verify cnpg plugin installation
+#  command: /usr/local/bin/kubectl cnpg version
+#  environment:
+#    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+#    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+#  register: cnpg_verify
+#  changed_when: false
+
+- debug:
+    var: cnpg_verify.stdout_lines
+
+# -------------------------------------------------------------
+# Deploy ROOT APP — sync automatique de tout bootstrap/
+# -------------------------------------------------------------
+#- name: Apply ArgoCD Root App
+#  shell: |
+#    /usr/local/bin/kubectl apply -f https://raw.githubusercontent.com/Saad7478/aws-argocd-postgresv1/main/gitops/bootstrap/root-app.yml
+
+- name: Apply ArgoCD Root App
+  command:
+    cmd: /usr/local/bin/kubectl apply -f https://raw.githubusercontent.com/Saad7478/aws-argocd-postgresv1/main/gitops/bootstrap/root-app.yml
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml

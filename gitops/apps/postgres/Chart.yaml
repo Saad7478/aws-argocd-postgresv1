@@ -1,0 +1,5 @@
+apiVersion: v2
+name: postgres-gitops
+description: Opérateur PostgreSQL CloudNativePG via GitOps
+type: application
+version: 1.0.0

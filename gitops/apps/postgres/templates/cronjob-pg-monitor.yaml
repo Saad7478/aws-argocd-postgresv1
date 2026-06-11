@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.monitoring.cronjob.scriptConfigMap }}
+  namespace: {{ .Release.Namespace }}
+data:
+  check_health.py: |
+{{ .Files.Get "scripts/check_health.py" | indent 4 }}
+
+  # check_bloat.py: |
+  # {{ .Files.Get "scripts/check_bloat.py" | indent 4 }}
+---
+{{- if .Values.monitoring.cronjob.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Values.monitoring.cronjob.name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  schedule: {{ .Values.monitoring.cronjob.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: {{ .Values.monitoring.cronjob.serviceAccountName }}
+
+          containers:
+            - name: python-monitor
+
+              image: "{{ .Values.monitoring.cronjob.image.repository }}:{{ .Values.monitoring.cronjob.image.tag }}"
+
+              command:
+                - python
+                - /scripts/check_health.py
+
+              env:
+                - name: CLUSTER_NAME
+                  value: {{ .Values.cluster.name | quote }}
+
+              volumeMounts:
+                - name: script-volume
+                  mountPath: /scripts
+
+              resources:
+{{ toYaml .Values.monitoring.cronjob.resources | indent 16 }}
+
+          restartPolicy: OnFailure
+
+          volumes:
+            - name: script-volume
+              configMap:
+                name: {{ .Values.monitoring.cronjob.scriptConfigMap }}
+{{- end }}

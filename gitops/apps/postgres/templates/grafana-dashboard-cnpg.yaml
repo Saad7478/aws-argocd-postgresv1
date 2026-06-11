@@ -1,0 +1,12 @@
+{{- if .Values.grafana.dashboard.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.grafana.dashboard.name }}
+  namespace: {{ .Values.grafana.dashboard.namespace }}
+  labels:
+    grafana_dashboard: {{ .Values.grafana.dashboard.label | quote }}
+data:
+  cloudnativepg.json: |
+{{ .Files.Get .Values.grafana.dashboard.file | indent 4 }}
+{{- end }}

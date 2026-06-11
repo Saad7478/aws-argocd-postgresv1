@@ -1,0 +1,88 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kube-prometheus-stack
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+
+spec:
+  project: default
+
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: kube-prometheus-stack
+    targetRevision: 61.9.0
+
+    helm:
+      values: |
+        # --- PROMETHEUS ---
+        prometheus:
+          prometheusSpec:
+            podMonitorSelectorNilUsesHelmValues: false
+            serviceMonitorSelectorNilUsesHelmValues: false
+            podMonitorNamespaceSelector: {}
+            serviceMonitorNamespaceSelector: {}
+          service:
+            type: NodePort
+            nodePort: 30090
+
+        # --- ALERTMANAGER ---
+        alertmanager:
+          serviceMonitor:
+            enabled: false
+          alertmanagerSpec:
+            
+            secrets:
+              - alertmanager-smtp
+          config:
+            global:
+              smtp_smarthost: 'smtp-relay.brevo.com:587'
+              smtp_from: 'gitoslab@gmail.com'
+              smtp_auth_username: 'adc83d001@smtp-brevo.com'
+              smtp_require_tls: true
+              
+              smtp_auth_password_file: '/etc/alertmanager/secrets/alertmanager-smtp/smtp_auth_password'
+            route:
+              group_by: ['alertname', 'datname']
+              group_wait: 30s
+              group_interval: 5m
+              repeat_interval: 1h
+              receiver: 'email-postgres'
+              routes:
+              - matchers:
+                - alertname =~ "PostgreSQL.*"
+                receiver: 'email-postgres'
+            receivers:
+            - name: 'email-postgres'
+              email_configs:
+              - to: 'gitoslab@gmail.com'
+                send_resolved: true
+
+        # --- GRAFANA ---
+        grafana:
+          enabled: true
+          service:
+            type: NodePort
+            nodePort: 30080
+          envFromSecrets:
+            - name: brevo-smtp
+          grafana.ini:
+            smtp:
+              enabled: true
+              host: smtp-relay.brevo.com:587
+              from_address: 'gitoslab@gmail.com'
+              from_name: Grafana
+              startTLS_policy: MandatoryStartTLS
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+      - CreateNamespace=true

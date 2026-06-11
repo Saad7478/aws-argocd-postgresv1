@@ -1,0 +1,22 @@
+{{- if .Values.monitoring.prometheusRule.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ .Values.monitoring.prometheusRule.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: {{ .Values.monitoring.prometheusRule.release }}
+spec:
+  groups:
+  - name: postgresql.deadlocks
+    interval: {{ .Values.monitoring.prometheusRule.deadlocks.interval }}
+    rules:
+    - alert: {{ .Values.monitoring.prometheusRule.deadlocks.alertName }}
+      expr: increase(cnpg_pg_stat_database_deadlocks{datname!=""}[{{ .Values.monitoring.prometheusRule.deadlocks.lookback }}]) > 0
+      for: 0m
+      labels:
+        severity: {{ .Values.monitoring.prometheusRule.deadlocks.severity }}
+      annotations:
+        summary: 'Deadlock on {{`{{ $labels.datname }}`}}'
+        description: '{{`{{ $value }}`}} deadlock(s) on database {{`{{ $labels.datname }}`}} detected since {{ .Values.monitoring.prometheusRule.deadlocks.lookback }}.'
+{{- end }}

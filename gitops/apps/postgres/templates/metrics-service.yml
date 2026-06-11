@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.metrics.service.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    cnpg.io/cluster: {{ .Values.cluster.name }}
+spec:
+  ports:
+    - name: metrics
+      port: {{ .Values.metrics.service.port }}
+      targetPort: {{ .Values.metrics.service.targetPort }}
+      protocol: TCP
+
+  selector:
+    cnpg.io/cluster: {{ .Values.cluster.name }}
+    cnpg.io/instanceRole: primary
+
+  type: {{ .Values.metrics.service.type }}

@@ -1,0 +1,86 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: {{ .Values.cluster.name | default "pg-cluster" }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ .Values.cluster.syncWave | quote }}
+spec:
+  instances: {{ .Values.cluster.instances }}
+  minSyncReplicas: {{ .Values.cluster.minSyncReplicas }}
+  maxSyncReplicas: {{ .Values.cluster.maxSyncReplicas }}
+
+  imageName: {{ .Values.cluster.imageName | quote }}
+  
+  certificates:
+    serverTLSSecret: {{ .Values.certificates.serverTLSSecret | quote }}
+    serverCASecret: {{ .Values.certificates.serverCASecret | quote }}
+    clientCASecret: {{ .Values.certificates.clientCASecret | quote }}
+    replicationTLSSecret: {{ .Values.certificates.replicationTLSSecret | quote }}
+  storage:
+    size: {{ .Values.storage.size | quote }}
+    storageClass: {{ .Values.storage.storageClass | quote }}
+  bootstrap:
+    initdb:
+      database: {{ .Values.database.name | quote }}
+      owner: {{ .Values.database.owner | quote }}
+      postInitApplicationSQL:
+        - CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
+        - CREATE EXTENSION IF NOT EXISTS pgstattuple;
+        - CREATE EXTENSION IF NOT EXISTS vector;
+        - CREATE EXTENSION IF NOT EXISTS pgaudit;
+  postgresql:
+    parameters:
+{{- toYaml .Values.postgresql.parameters | nindent 6 }}
+  backup:
+    retentionPolicy: {{ .Values.backup.retentionPolicy | quote }}
+    barmanObjectStore:
+      destinationPath: {{ .Values.backup.s3Bucket | quote }}
+      s3Credentials:
+        inheritFromIAMRole: true
+      wal:
+        compression: {{ .Values.backup.walCompression | quote }}
+        encryption: AES256
+      data:
+        compression: {{ .Values.backup.dataCompression | quote }}
+        immediateCheckpoint: false
+        jobs: 2
+  
+  monitoring:
+    enablePodMonitor: {{ .Values.monitoring.enablePodMonitor }}
+    customQueriesConfigMap:
+      - name: {{ .Values.monitoring.customQueriesConfigMap.name }}
+        key: {{ .Values.monitoring.customQueriesConfigMap.key }}
+  
+  managed:
+    services:
+      additional:
+        - selectorType: rw
+          updateStrategy: patch
+          serviceTemplate:
+            metadata:
+              name: {{ .Values.services.rw.name }}
+              namespace: {{ .Release.Namespace }}
+            spec:
+              type: NodePort
+              ports:
+                - name: postgres
+                  port: 5432
+                  protocol: TCP
+                  targetPort: 5432
+                  nodePort: {{ .Values.services.rw.nodePort }}
+
+        - selectorType: ro
+          updateStrategy: patch
+          serviceTemplate:
+            metadata:
+              name: {{ .Values.services.ro.name }}
+              namespace: {{ .Release.Namespace }}
+            spec:
+              type: NodePort
+              ports:
+                - name: postgres
+                  port: 5432
+                  protocol: TCP
+                  targetPort: 0
+                  nodePort: {{ .Values.services.ro.nodePort }}
