@@ -163,7 +163,6 @@ To prevent race conditions and initialization failures within Kubernetes, resour
 │   ├── ansible.cfg
 │   ├── inventories
 │   │   └── dev
-│   │       └── hosts.ini
 │   ├── playbooks
 │   │   ├── group_vars
 │   │   │   └── all.yaml
@@ -186,20 +185,24 @@ To prevent race conditions and initialization failures within Kubernetes, resour
 │               ├── k3s.yml
 │               ├── main.yml
 │               └── prereqs.yml
+├── et --hard HEAD~1
 ├── gitops
 │   ├── apps
 │   │   ├── postgres
 │   │   │   ├── Chart.yaml
 │   │   │   ├── files
-│   │   │   │   └── cloudnativepg.json
+│   │   │   │   ├── cloudnativepg.json
+│   │   │   │   └── custom-metrics.yaml
 │   │   │   ├── scripts
 │   │   │   │   ├── check_bloat.py
 │   │   │   │   └── check_health.py
 │   │   │   ├── templates
 │   │   │   │   ├── cronjob-pg-monitor.yaml
+│   │   │   │   ├── custom-metrics-configmap.yaml
 │   │   │   │   ├── grafana-dashboard-cnpg.yaml
 │   │   │   │   ├── metrics-service.yml
 │   │   │   │   ├── postgres-cluster.yaml
+│   │   │   │   ├── postgres-restore.yaml
 │   │   │   │   ├── prometheusrule-deadlocks.yaml
 │   │   │   │   ├── scheduled-backup.yaml
 │   │   │   │   └── storageclass-gp3.yaml
@@ -215,37 +218,40 @@ To prevent race conditions and initialization failures within Kubernetes, resour
 │       ├── postgres-certs-app.yml
 │       └── root-app.yml
 ├── images
-│   └── argocd1.png
-└── terraform
-    ├── environments
-    │   └── dev
-    │       ├── inventory.tf
-    │       ├── main.tf
-    │       ├── outputs.tf
-    │       ├── providers.tf
-    │       ├── templates
-    │       │   ├── hosts.tpl
-    │       │   └── ssh_config.tpl
-    │       ├── terraform.tfvars
-    │       └── variables.tf
-    └── modules
-        ├── compute
-        │   ├── main.tf
-        │   ├── outputs.tf
-        │   └── variables.tf
-        ├── security
-        │   ├── main.tf
-        │   ├── outputs.tf
-        │   └── variables.tf
-        ├── storage
-        │   ├── main.tf
-        │   ├── outputs.tf
-        │   └── variables.tf
-        └── vpc
-            ├── main.tf
-            ├── outputs.tf
-            └── variables.tf
-
+│   ├── argocd1.png
+│   ├── grafana1.png
+│   ├── grafana2.png
+│   └── prometheus1.png
+├── terraform
+│   ├── environments
+│   │   └── dev
+│   │       ├── inventory.tf
+│   │       ├── main.tf
+│   │       ├── outputs.tf
+│   │       ├── providers.tf
+│   │       ├── templates
+│   │       │   ├── hosts.tpl
+│   │       │   └── ssh_config.tpl
+│   │       ├── terraform.tfvars
+│   │       └── variables.tf
+│   └── modules
+│       ├── compute
+│       │   ├── main.tf
+│       │   ├── outputs.tf
+│       │   └── variables.tf
+│       ├── security
+│       │   ├── main.tf
+│       │   ├── outputs.tf
+│       │   └── variables.tf
+│       ├── storage
+│       │   ├── main.tf
+│       │   ├── outputs.tf
+│       │   └── variables.tf
+│       └── vpc
+│           ├── main.tf
+│           ├── outputs.tf
+│           └── variables.tf
+└── terraform.tfstate
 ```
 
 ## 7. Day-2 Database Operations
